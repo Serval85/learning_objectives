@@ -111,7 +111,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(200, message)
                 self.end_headers()
             else:
-                self.send_response(200, 'message')
+                self.send_response(400, 'No parameters')
                 self.end_headers()
 
 
