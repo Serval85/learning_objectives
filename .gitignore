@@ -131,3 +131,7 @@ dmypy.json
 # PyCharh
 .idea
 HttpEchoServer/http_server/tst.py
+png/
+btc_tracker/btc_track/db/matlib_tst.py
+btc_tracker/btc_track/db/crypto.db
+
