@@ -76,8 +76,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 file_name = query.get('name', [file_id])[0]
                 file_tag = query.get('tag', ['None'])[0]
 
-                attr_json = {'id': file_id, 'name': file_name, 'tag': file_tag,
-                             'size': content_length, 'mimeType': mime_type,
+                attr_json = {'id': str(file_id), 'name': file_name,
+                             'tag': file_tag, 'size': content_length,
+                             'mimeType': mime_type,
                              'modificationTime': modification_time}
                 payload = self.rfile.read(content_length)
 
@@ -85,8 +86,9 @@ class RequestHandler(BaseHTTPRequestHandler):
                 logging.debug('do_POST: Result_search_id:' +
                               str(result_search_id))
 
-                if result_search_id and os.path.isfile(result_search_id):
-                    os.remove(result_search_id)
+                if result_search_id and \
+                        os.path.isfile(str(result_search_id[0])):
+                    os.remove(result_search_id[0])
 
                 result_db_insert = dbw.db_insert_update(attr_json)
                 logging.debug('do_POST: Result_db_insert:' +
@@ -94,9 +96,11 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 if result_db_insert in ['OK', 'UPDATE']:
                     try:
-                        with open(file_id, 'wb') as file:
+                        with open(str(file_id), 'wb') as file:
                             file.write(payload)
                     finally:
+                        logging.error('do_POST: write file:' +
+                                      str(file_id))
                         file.close()
 
                     response_pack = {'status': 201, 'message': 'Created',
@@ -118,7 +122,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                                  bytes('A harya ne tresnet?', 'UTF-8'),
                              'content_length': '', 'content_type': ''}
             self.api_send_response(response_pack)
-            logging.error('do_POST: ' + MemoryError + ' error on post')
+            logging.error('do_POST: ' + str(MemoryError) + ' error on post')
             return
 
     def do_GET(self):  # pylint: disable = invalid-name
@@ -136,6 +140,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                              'content_length':
                                  len(bytes(response_message, 'UTF-8')),
                              'content_type': ''}
+            self.api_send_response(response_pack)
         elif send_uri == '/api/download':
             query = parse_qs(
                 urlparse(self.path, scheme='', allow_fragments=True).query)
@@ -146,8 +151,11 @@ class RequestHandler(BaseHTTPRequestHandler):
                 file_name = file_data[0]
                 file_size = file_data[1]
                 file_type = file_data[2]
-                with open(query.get('id')[0], 'rb') as file:
-                    response_message = file.read()
+                try:
+                    with open(query.get('id')[0], 'rb') as file:
+                        response_message = file.read()
+                        file.close()
+                finally:
                     file.close()
                 response_pack = {'status': 200,
                                  'message': 'OK',
@@ -161,7 +169,8 @@ class RequestHandler(BaseHTTPRequestHandler):
                                  'write_message': '',
                                  'content_length': '',
                                  'content_type': ''}
-            logging.debug('do_GET: response_pack: ' + str(response_pack))
+            logging.debug('do_GET: response: ' +
+                          str(response_pack.get('status')))
             self.api_send_response(response_pack)
 
     def do_DELETE(self):  # pylint: disable = invalid-name
@@ -174,16 +183,19 @@ class RequestHandler(BaseHTTPRequestHandler):
             logging.debug('do_DELETE: query: ' + str(query))
             if query:
                 file_data = dbw.get_metadata(query)
+                deleted = 0
                 for i in file_data:
-                    result_search_name = dbw.search_name_from_id(i)
+                    result_search_name = \
+                        dbw.search_name_from_id(i)
                     logging.debug('do_DELETE: result_search_name: ' +
-                                  str(result_search_name))
+                                  str(result_search_name[0]))
 
-                    deleted = 0
-                    if result_search_name and os.path.isfile(result_search_name):
-                        os.remove(result_search_name)
-                        logging.info('do_DELETE: ' + str(result_search_name) +
-                                      ' - deleted')
+                    # deleted = 0
+                    if result_search_name[0] and\
+                            os.path.isfile(result_search_name[0]):
+                        os.remove(result_search_name[0])
+                        logging.info('do_DELETE: ' +
+                                     str(result_search_name[1]) + ' - deleted')
                         deleted += 1
                         dbw.delete_file(i.get('id'))
 
@@ -204,7 +216,6 @@ if __name__ == "__main__":
                                '%(message)s',
                         datefmt='%d/%m/%Y %H:%M:%S',
                         level=logging.DEBUG)  # pylint: disable = duplicate-code
-
     server = HTTPServer(('127.0.0.1', 10001), RequestHandler)
     logging.info('Start http_server. IP: '  # pylint: disable = logging-not-lazy
                  + str(server.server_address) +

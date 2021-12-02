@@ -45,8 +45,9 @@ class DBWorker:
             cur.execute(query, data)
             self.db_conn.commit()
             logging.debug('DB: db_insert_update: '
-                          'try INSERT data if files: ' + data)
-            logging.info('DB: db_insert_update: INSERT data for files' + data)
+                          'try INSERT data if files: ' + str(data))
+            logging.info('DB: db_insert_update: INSERT data for files' +
+                         str(data))
             return 'OK'
         except sqlite3.Error as err:
             if str(err) == 'UNIQUE constraint failed: files.id':
@@ -66,32 +67,33 @@ class DBWorker:
             logging.debug('DB: db_insert_update: result' + result)
             return result
 
-    def search_name_from_id(self, attr_json) -> str:
+    def search_name_from_id(self, attr_json):
         """Search file name in bd from file id"""
-        logging.debug('DB: search_name_from_id: attr_json:' + attr_json)
+        logging.debug('DB: search_name_from_id: attr_json:' + str(attr_json))
         cur = self.db_conn.cursor()
         try:
-            cur.execute("SELECT name FROM files WHERE id = ?;",
+            cur.execute("SELECT * FROM files WHERE id = ?;",
                         (attr_json.get('id'),))
             search_result = cur.fetchone()
             self.db_conn.commit()
             logging.debug('DB: search_name_from_id: search_result:'
-                          + search_result)
+                          + str(search_result))
 
             if search_result:
-                for row in search_result:
-                    result = row
+                result_id = search_result[0]
+                result_name = search_result[1]
+                result = [result_id, result_name]
             else:
-                result = False
-            logging.debug('DB: search_name_from_id: result:' + result)
+                return False
+            logging.debug('DB: search_name_from_id: result:' + str(result))
             return result
         except sqlite3.Error as err:
-            logging.error('DB: search_name_from_id: ' + err)
-            return err
+            logging.error('DB: search_name_from_id: ' + str(err))
+            return False
 
     def get_metadata(self, query) -> json:
         """Create and execute query metadata"""
-        logging.debug('DB: get_metadata: ' + query)
+        logging.debug('DB: get_metadata: ' + str(query))
         cur = self.db_conn.cursor()
         query_str = ''
         for i in query.keys():
@@ -116,7 +118,8 @@ class DBWorker:
             result_json = {'id': i[0], 'name': i[1], 'tag': i[2], 'size': i[3],
                            'mimeType': i[4], 'modificationTime': i[5]}
             metadata_result.append(result_json)
-        logging.info('DB: get_metadata: metadata_result: ' + metadata_result)
+        logging.info('DB: get_metadata: metadata_result: ' +
+                     str(metadata_result))
         return metadata_result
 
     def get_file_data(self, query):
@@ -130,7 +133,7 @@ class DBWorker:
         search_file_result = cur.fetchone()
         self.db_conn.commit()
         logging.info('DB: get_file_data: search_file_result:' +
-                     search_file_result)
+                     str(search_file_result))
         return search_file_result
 
     def delete_file(self, file_id):
