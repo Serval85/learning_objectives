@@ -36,7 +36,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_header("Content-Disposition",
                              response_pack.get('Content-Disposition'))
         self.end_headers()
-        logging.info('Response headers for send: ' + str(self.headers))
+        log.info('Response headers for send: ' + str(self.headers))
         self.wfile.write(response_pack.get('write_message'))
 
     def do_POST(self):  # pylint: disable = invalid-name
@@ -47,7 +47,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                                          'application/octet-stream')
             modification_time = str(datetime.datetime.now())
 
-            logging.debug('do_POST: content_length:' + str(content_length) +
+            log.debug('do_POST: content_length:' + str(content_length) +
                           ' / ' + 'mime_type:' + str(mime_type) +
                           ' / ' + 'modification_time:' + str(modification_time))
 
@@ -57,13 +57,13 @@ class RequestHandler(BaseHTTPRequestHandler):
                                      bytes("Gde den'gi, Lebovski?", 'UTF-8'),
                                  'content_length': '', 'content_type': ''}
                 self.api_send_response(response_pack)
-                logging.debug('do_POST: Response_pack:' + str(response_pack))
+                log.debug('do_POST: Response_pack:' + str(response_pack))
                 return
             send_uri = urlparse(self.path, scheme='', allow_fragments=True).path
             if send_uri == '/api/upload':
                 query = parse_qs(
                     urlparse(self.path, scheme='', allow_fragments=True).query)
-                logging.debug('do_POST: /api/upload query:' + str(query))
+                log.debug('do_POST: /api/upload query:' + str(query))
                 try:
                     file_id = query.get('id', None)
                     if file_id is None:
@@ -83,7 +83,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 payload = self.rfile.read(content_length)
 
                 result_search_id = dbw.search_name_from_id(attr_json)
-                logging.debug('do_POST: Result_search_id:' +
+                log.debug('do_POST: Result_search_id:' +
                               str(result_search_id))
 
                 if result_search_id and \
@@ -91,7 +91,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     os.remove(result_search_id[0])
 
                 result_db_insert = dbw.db_insert_update(attr_json)
-                logging.debug('do_POST: Result_db_insert:' +
+                log.debug('do_POST: Result_db_insert:' +
                               str(result_db_insert))
 
                 if result_db_insert in ['OK', 'UPDATE']:
@@ -99,7 +99,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                         with open(str(file_id), 'wb') as file:
                             file.write(payload)
                     finally:
-                        logging.error('do_POST: write file:' +
+                        log.error('do_POST: write file:' +
                                       str(file_id))
                         file.close()
 
@@ -113,7 +113,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                                      'write_message': '',
                                      'content_length': '', 'content_type': ''}
 
-                logging.debug('do_POST: Response_pack:' + str(response_pack))
+                log.debug('do_POST: Response_pack:' + str(response_pack))
                 self.api_send_response(response_pack)
         except MemoryError:
             response_pack = {'status': 418,
@@ -122,17 +122,17 @@ class RequestHandler(BaseHTTPRequestHandler):
                                  bytes('A harya ne tresnet?', 'UTF-8'),
                              'content_length': '', 'content_type': ''}
             self.api_send_response(response_pack)
-            logging.error('do_POST: ' + str(MemoryError) + ' error on post')
+            log.error('do_POST: ' + str(MemoryError) + ' error on post')
             return
 
     def do_GET(self):  # pylint: disable = invalid-name
         """Get handler"""
         send_uri = urlparse(self.path, scheme='', allow_fragments=True).path
-        logging.debug('do_GET: ' + send_uri)
+        log.debug('do_GET: ' + send_uri)
         if send_uri == '/api/get':
             query = parse_qs(
                 urlparse(self.path, scheme='', allow_fragments=True).query)
-            logging.debug('do_GET: query: ' + str(query))
+            log.debug('do_GET: query: ' + str(query))
             response_message = str(dbw.get_metadata(query))
             response_pack = {'status': 200,
                              'message': 'OK',
@@ -144,10 +144,10 @@ class RequestHandler(BaseHTTPRequestHandler):
         elif send_uri == '/api/download':
             query = parse_qs(
                 urlparse(self.path, scheme='', allow_fragments=True).query)
-            logging.debug('do_GET: ' + send_uri)
+            log.debug('do_GET: ' + send_uri)
             file_data = dbw.get_file_data(query.get('id')[0])
             if file_data:
-                logging.debug('do_GET: file_data: ' + str(file_data))
+                log.debug('do_GET: file_data: ' + str(file_data))
                 file_name = file_data[0]
                 file_size = file_data[1]
                 file_type = file_data[2]
@@ -169,55 +169,62 @@ class RequestHandler(BaseHTTPRequestHandler):
                                  'write_message': '',
                                  'content_length': '',
                                  'content_type': ''}
-            logging.debug('do_GET: response: ' +
+            log.debug('do_GET: response: ' +
                           str(response_pack.get('status')))
             self.api_send_response(response_pack)
 
     def do_DELETE(self):  # pylint: disable = invalid-name
         """Delete handler"""
         send_uri = urlparse(self.path, scheme='', allow_fragments=True).path
-        logging.debug('do_DELETE: send_uri: ' + str(send_uri))
+        log.debug('do_DELETE: send_uri: ' + str(send_uri))
         if send_uri == '/api/delete':
             query = parse_qs(
                 urlparse(self.path, scheme='', allow_fragments=True).query)
-            logging.debug('do_DELETE: query: ' + str(query))
+            log.debug('do_DELETE: query: ' + str(query))
             if query:
                 file_data = dbw.get_metadata(query)
                 deleted = 0
                 for i in file_data:
                     result_search_name = \
                         dbw.search_name_from_id(i)
-                    logging.debug('do_DELETE: result_search_name: ' +
+                    log.debug('do_DELETE: result_search_name: ' +
                                   str(result_search_name[0]))
 
                     # deleted = 0
                     if result_search_name[0] and\
                             os.path.isfile(result_search_name[0]):
                         os.remove(result_search_name[0])
-                        logging.info('do_DELETE: ' +
+                        log.info('do_DELETE: ' +
                                      str(result_search_name[1]) + ' - deleted')
                         deleted += 1
                         dbw.delete_file(i.get('id'))
 
                 message = str(deleted) + ' files deleted'
-                logging.info('do_DELETE: message for delete:' + message)
+                log.info('do_DELETE: message for delete:' + message)
                 self.send_response(200, message)
                 self.end_headers()
             else:
-                logging.info('do_DELETE: No parameters')
+                log.info('do_DELETE: No parameters')
                 self.send_response(400, 'No parameters')
                 self.end_headers()
 
 
-if __name__ == "__main__":
-    logging.basicConfig(filename='log.log', filemode='w',
-                        format='%(asctime)s %(name)s '
-                               '- %(levelname)s - '
-                               '%(message)s',
-                        datefmt='%d/%m/%Y %H:%M:%S',
-                        level=logging.DEBUG)  # pylint: disable = duplicate-code
+def main():
+    """Main func. Start http server"""
     server = HTTPServer(('127.0.0.1', 10001), RequestHandler)
-    logging.info('Start http_server. IP: '  # pylint: disable = logging-not-lazy
+    log.info('Start http_server. IP: '
                  + str(server.server_address) +
                  ', DB name:' + DB_NAME)
     server.serve_forever()
+
+
+if __name__ == "__main__":
+    log = logging.getLogger('http_server')
+    log.setLevel(logging.DEBUG)
+    file_handler = logging.FileHandler("log.log")
+    formatter = logging.Formatter('%(asctime)s %(name)s - %(levelname)s - '
+                                  '%(message)s')
+    file_handler.setFormatter(formatter)
+    log.addHandler(file_handler)
+
+    main()
