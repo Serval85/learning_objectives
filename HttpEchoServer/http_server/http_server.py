@@ -37,7 +37,12 @@ class RequestHandler(BaseHTTPRequestHandler):
                              response_pack.get('Content-Disposition'))
         self.end_headers()
         log.info('Response headers for send: %s', str(self.headers))
-        self.wfile.write(response_pack.get('write_message'))
+
+        if response_pack.get('write_message'):
+            send_message = bytes(response_pack.get('write_message'))
+        else:
+            send_message = bytes(response_pack.get('status'))
+        self.wfile.write(send_message)
 
     def do_POST(self):  # pylint: disable = invalid-name
         """Post handler"""
