@@ -96,7 +96,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                 if result_search_id and \
                         os.path.isfile(str(result_search_id[0])):
-                    os.remove(result_search_id[0])
+                    os.remove(str(result_search_id[0]))
 
                 result_db_insert = dbw.db_insert_update(attr_json)
                 log.debug('do_POST: Result_db_insert: %s',
@@ -108,7 +108,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                             file.write(payload)
                     finally:
                         log.error('do_POST: write file: %s', str(file_id))
-                        file.close()
+                        # file.close()
 
                     response_pack = {'status': 201, 'message': 'Created',
                                      'write_message':
@@ -198,8 +198,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 
                     # deleted = 0
                     if result_search_name[0] and\
-                            os.path.isfile(result_search_name[0]):
-                        os.remove(result_search_name[0])
+                            os.path.isfile(str(result_search_name[0])):
+                        os.remove(str(result_search_name[0]))
                         log.info('do_DELETE: %s - deleted',
                                  str(result_search_name[1]))
                         deleted += 1
