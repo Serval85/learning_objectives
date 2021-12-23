@@ -81,7 +81,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 except TypeError('NoneType'):
                     file_id = uuid.uuid4()
 
-                file_name = query.get('name', [file_id])[0]
+                file_name = str(query.get('name', [file_id])[0])
                 file_tag = query.get('tag', ['None'])[0]
 
                 attr_json = {'id': str(file_id), 'name': file_name,
@@ -140,7 +140,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             query = parse_qs(
                 urlparse(self.path, scheme='', allow_fragments=True).query)
             log.debug('do_GET: query: %s', str(query))
-            response_message = str(dbw.get_metadata(query))
+            response_message = json.dumps(dbw.get_metadata(query))
             response_pack = {'status': 200,
                              'message': 'OK',
                              'write_message': bytes(response_message, 'UTF-8'),
