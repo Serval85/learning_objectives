@@ -32,9 +32,9 @@ class RequestHandler(BaseHTTPRequestHandler):
         if response_pack.get('content_type'):
             self.send_header("Content-Type",
                              response_pack.get('content_type'))
-        if response_pack.get('Content-Disposition'):
+        if response_pack.get('content-disposition'):
             self.send_header("Content-Disposition",
-                             response_pack.get('Content-Disposition'))
+                             response_pack.get('content-disposition'))
         self.end_headers()
         log.info('Response headers for send: %s', str(self.headers))
 
