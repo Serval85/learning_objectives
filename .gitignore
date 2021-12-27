@@ -136,3 +136,4 @@ btc_tracker/btc_track/db/matlib_tst.py
 
 .db
 .log
+HttpEchoServer/http_server/db/metadata.db
