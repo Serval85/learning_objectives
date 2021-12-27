@@ -34,6 +34,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                              response_pack.get('content_type'))
         if response_pack.get('content-disposition'):
             self.send_header("Content-Disposition",
+                             'attachment; filename=' +
                              response_pack.get('content-disposition'))
         self.end_headers()
         log.info('Response headers for send: %s', str(self.headers))
